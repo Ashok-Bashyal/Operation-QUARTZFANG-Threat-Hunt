@@ -17,16 +17,6 @@ The investigation also focused on understanding how AI was used during the attac
 - **Linux Syslog** – Investigating system and PostgreSQL activity.
 - **Endpoint and Network Logs** – Tracking suspicious processes and connections.
 
-## Investigation Environment
-
-**Log Analytics Workspace:** `LAW-HuntPractice`
-
-| System | Purpose |
-|---|---|
-| `sc-portal01` | Web application server and initial compromised host |
-| `sc-db01` | PostgreSQL database server |
-| `sc-registry01` | Harbor container registry |
-| `sc-admin01` | Administrative API server |
 
 ## Investigation Findings
 
