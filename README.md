@@ -104,7 +104,7 @@ The query identified a suspicious `python3` command executed on `sc-portal01` at
 
 The command contained socket and subprocess functionality consistent with reverse-shell activity, supporting the finding of remote code execution.
 
-![Initial Compromise](images/Initial-Compromise.png)
+![Initial Compromise](images/Initial Compromise.png)
 
 ### Query 2: PostgreSQL Activity – Investigating Database Connections
 
@@ -124,7 +124,7 @@ The query returned PostgreSQL activity, including SQL statements, scheduled main
 
 Further investigation showed connection-limit errors alongside normal application queries. This helped distinguish the connection spike from confirmed attacker enumeration.
 
-![PostgreSQL Activity](images/PostgreSQL-Activity.png)
+![PostgreSQL Activity](images/PostgreSQL Activity.png)
 
 ### Query 3: AI-Assisted Attack – Agent Tool Activity
 
@@ -161,7 +161,7 @@ The results demonstrated how AI was used to automate different attack stages.
 
 However, some AI-generated claims were not verified by independent security logs, highlighting the importance of validating automated findings.
 
-![AI-Assisted Attack](images/AI-Assisted-Attack.png)
+![AI-Assisted Attack](images/AI-Assisted Attack.png)
 
 ---
 
