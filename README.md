@@ -107,7 +107,29 @@ The command contained socket and subprocess functionality consistent with revers
 <img width="848" height="357" alt="Initial Compromise" src="https://github.com/user-attachments/assets/cb909b0a-0417-4c8c-bb83-4e9528a9120c" />
 
 
-### Query 2: PostgreSQL Activity – Investigating Database Connections
+### Query 2: Credential Harvesting – Configuration File Access
+
+This query identifies suspicious commands used to access application configuration files on the compromised web server.
+
+```kql
+DeviceProcessEvents_CL
+| where TimeGenerated between (datetime(2026-09-20 06:55:00) .. datetime(2026-09-20 07:15:00))
+| where DeviceName == "sc-portal01"
+| where ProcessCommandLine contains "portal.conf"
+    or ProcessCommandLine contains "cat "
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine
+| order by TimeGenerated asc
+```
+
+**Findings:**
+
+The attacker executed `cat /etc/semicrest/portal.conf` on `sc-portal01` at approximately 07:05 UTC. The file contained service account credentials associated with PostgreSQL and Harbor, making it a key target for credential harvesting.
+
+<img width="868" height="573" alt="Credential Harvesting" src="https://github.com/user-attachments/assets/0eea4c68-913c-4f41-b484-00bfab6aa062" />
+
+
+
+### Query 3: PostgreSQL Activity – Investigating Database Connections
 
 This query examines PostgreSQL and system activity on `sc-db01` during a suspicious connection spike.
 
@@ -128,7 +150,7 @@ Further investigation showed connection-limit errors alongside normal applicatio
 <img width="910" height="818" alt="PostgreSQL Activity" src="https://github.com/user-attachments/assets/e73ec177-985f-4152-82e1-376809dfa761" />
 
 
-### Query 3: AI-Assisted Attack – Agent Tool Activity
+### Query 4: AI-Assisted Attack – Agent Tool Activity
 
 This query filters AI agent logs to display attack-related automated actions.
 
