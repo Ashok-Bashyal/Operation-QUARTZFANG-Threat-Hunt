@@ -204,5 +204,3 @@ This project strengthened my understanding of SOC operations, threat hunting, an
 
 
 ---
-
-*This project was completed in an authorized cybersecurity training environment using simulated attack data.*
