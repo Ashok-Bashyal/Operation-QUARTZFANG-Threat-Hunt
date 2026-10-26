@@ -1,84 +1,114 @@
-# Operation-QUARTZFANG-Threat-Hunt
 
+# Operation QUARTZFANG – Complete Threat Hunting Investigation Report
+
+**Microsoft Azure | KQL | SOC Investigation | MITRE ATT&CK**
 
 ## Project Overview
 
-Operation QUARTZFANG is a hands-on SOC threat-hunting investigation involving a simulated AI-assisted cyberattack against **SemiCrest Technologies**.
+Operation QUARTZFANG is a hands-on SOC threat-hunting investigation involving a simulated AI-assisted cyberattack against **SemiCrest Technologies**. I used Microsoft Azure Log Analytics and Kusto Query Language (KQL) to analyze security events, investigate suspicious activity, and reconstruct the attacker's actions across multiple systems.
 
-I used **Microsoft Azure Log Analytics** and **Kusto Query Language (KQL)** to investigate suspicious activity across multiple systems, identify attacker behavior, and reconstruct the attack timeline.
+This report documents all 28 investigation flags across eight sections, including the KQL queries, findings, and reasoning behind each investigation.
 
-The investigation also focused on understanding how AI was used during the attack and distinguishing legitimate system activity from malicious behavior.
+## Investigation Environment
 
-## Tools and Technologies
+**Log Analytics Workspace:** `LAW-HuntPractice`
 
-- **Microsoft Azure Log Analytics** – Investigating and analyzing security logs.
-- **Kusto Query Language (KQL)** – Searching, filtering, and correlating security events.
-- **MITRE ATT&CK** – Mapping attacker tactics and techniques.
-- **Linux Syslog** – Investigating system and PostgreSQL activity.
-- **Endpoint and Network Logs** – Tracking suspicious processes and connections.
-
-
-## Investigation Findings
-
-### 1. Initial Access
-
-The investigation started with suspicious requests targeting the web portal's document preview functionality.
-
-By analyzing web access logs and process execution events, I identified evidence of remote code execution on `sc-portal01`, including a Python reverse-shell command.
-
-### 2. Credential Access
-
-After gaining access, the attacker accessed `/etc/semicrest/portal.conf`, an application configuration file containing credentials for internal services.
-
-The compromised credentials included accounts used by the PostgreSQL database and Harbor container registry.
-
-### 3. Lateral Movement
-
-The attacker used compromised credentials to explore internal services, including the PostgreSQL database, Harbor container registry, and administrative API.
-
-I investigated suspicious database queries and registry operations. An administrative API request attempting to access secrets returned **HTTP 403 (Forbidden)**.
-
-### 4. AI Hallucination Investigation
-
-The AI agent reported successfully obtaining sensitive information from internal services.
-
-However, some of these claims were not supported by actual security logs. This demonstrated the importance of verifying AI-generated results against independent evidence.
-
-### 5. Data Exfiltration and Persistence
-
-I identified suspicious activity involving an encrypted archive, followed by an unusual outbound HTTPS connection.
-
-The attacker also created a local account named `svc_monitor` and added it to the sudo group, indicating a potential persistence mechanism.
-
-### 6. Reconnaissance and Automation
-
-I analyzed automated web requests and compared suspicious external scanning activity against legitimate internal Nessus scanning.
-
-Request frequency, source IP addresses, and user-agent information helped distinguish reconnaissance from authorized vulnerability scanning.
-
-### 7. AI Autonomy Investigation
-
-The AI agent logs showed that human operators approved important stages of the attack while the AI performed technical tasks such as payload adaptation, credential harvesting, and database queries.
-
-### 8. False Positive Investigation
-
-The final stage involved identifying legitimate activities that appeared suspicious.
-
-I investigated normal service account usage, scheduled PostgreSQL backups, and a database connection spike.
-
-By analyzing timestamps, historical activity, and query behavior, I was able to distinguish normal system operations from confirmed malicious activity.
 
 ---
 
-## KQL Investigation Queries
+# Section 1: Initial Access
 
-The following KQL queries were used during the investigation to analyze different stages of the attack.
+## Flag 1 – Identify the Vulnerable Endpoint
 
-**Note:** The simulated attack occurred on September 20, 2026, while some AI agent logs were ingested on October 24, 2026. Set the Log Analytics time range to **Set in query** when running these examples.
+### Objective
 
-### Query 1: Initial Compromise – Suspicious Process Execution
+Identify which endpoint the attacker targeted during the initial compromise.
 
-This query searches for process execution events on the compromised web server during the initial attack.
+### KQL Query
+
+```kql
+PortalAccessLog_CL
+| where TimeGenerated between (datetime(2026-09-20 06:45:00) .. datetime(2026-09-20 07:00:00))
+| project TimeGenerated, SrcIpAddr, HttpStatusCode, UserAgent, RawEvent=pack_all()
+| order by TimeGenerated asc
+```
+
+<img width="911" height="515" alt="image" src="https://github.com/user-attachments/assets/b721e51a-3f2e-4da5-8174-e278e636ebba" />
+
+
+### Findings
+
+Suspicious requests targeted the web portal's document preview functionality around 06:52 UTC. The requests occurred shortly before unusual process execution was observed on the web server.
+
+### Investigation Reasoning
+
+I started by searching the web access logs around the alert timestamp and comparing the source addresses, requests, and HTTP response codes. This helped me narrow down the targeted functionality and identify the activity associated with the initial exploitation attempt.
+
+---
+
+## Flag 2 – Investigate the Exploitation Attempts
+
+### Objective
+
+Identify the URL schemes involved in the exploitation attempts and compare their timing.
+
+### KQL Query
+
+```kql
+PortalAccessLog_CL
+| where TimeGenerated between (datetime(2026-09-20 06:52:00) .. datetime(2026-09-20 06:53:00))
+| project TimeGenerated, SrcIpAddr, HttpStatusCode, RawEvent=pack_all()
+| order by TimeGenerated asc
+```
+
+<img width="1142" height="165" alt="image" src="https://github.com/user-attachments/assets/b98bb969-a650-4eba-beb0-39aee0984f3b" />
+
+
+### Findings
+
+Two suspicious document preview requests occurred within seconds of each other. The first request was rejected, while the following request was accepted. The AI agent logs also showed URL scheme testing and payload modification during this period.
+
+### Investigation Reasoning
+
+I compared the timestamps and HTTP response codes of the suspicious requests to understand how the attack progressed. The change between attempts suggested that the attacker adjusted the exploitation technique after the initial failure. The exact schemes and time gap should be confirmed against the original request records.
+
+---
+
+## Flag 3 – Identify the Attacker's Source IP
+
+### Objective
+
+Determine which external IP address originated the initial exploitation attempts.
+
+### KQL Query
+
+```kql
+PortalAccessLog_CL
+| where TimeGenerated between (datetime(2026-09-20 06:52:00) .. datetime(2026-09-20 06:53:00))
+| summarize RequestCount=count() by SrcIpAddr
+| order by RequestCount desc
+```
+
+<img width="610" height="172" alt="image" src="https://github.com/user-attachments/assets/1cce2586-c32d-4901-91f9-33942a9e71c9" />
+
+
+### Findings
+
+The suspicious external source was identified by examining the IP addresses associated with requests during the exploitation window and matching them to the document preview activity.
+
+### Investigation Reasoning
+
+I grouped requests by their source IP addresses to identify which systems were communicating with the web application during the attack. Rather than assuming that the source generating the most traffic was malicious, I focused on the address associated with the suspicious exploitation attempts.
+
+---
+
+## Flag 4 – Confirm Remote Code Execution
+
+### Objective
+
+Determine whether the attacker successfully executed commands on the web server.
+
+### KQL Query
 
 ```kql
 DeviceProcessEvents_CL
@@ -88,18 +118,29 @@ DeviceProcessEvents_CL
 | order by TimeGenerated asc
 ```
 
-**Findings:**
-
-The query identified a suspicious `python3` command executed on `sc-portal01` at approximately 06:52:52 UTC.
-
-The command contained socket and subprocess functionality consistent with reverse-shell activity, supporting the finding of remote code execution.
-
-<img width="848" height="357" alt="Initial Compromise" src="https://github.com/user-attachments/assets/cb909b0a-0417-4c8c-bb83-4e9528a9120c" />
+<img width="857" height="190" alt="image" src="https://github.com/user-attachments/assets/c0e60cae-8a54-4f3e-8365-433d4c9df7b5" />
 
 
-### Query 2: Credential Harvesting – Configuration File Access
+### Findings
 
-This query identifies suspicious commands used to access application configuration files on the compromised web server.
+A suspicious `python3` command executed on `sc-portal01` at approximately 06:52:52 UTC. The command contained Python socket and subprocess functionality consistent with reverse-shell execution, indicating that the attacker had progressed beyond simply sending requests to the web application.
+
+### Investigation Reasoning
+
+A successful HTTP request alone does not prove that a server was compromised, so I compared the web access activity with endpoint process execution logs. The unexpected Python command appeared immediately after the suspicious requests, providing stronger evidence that the exploitation attempt resulted in remote code execution.
+
+
+---
+
+# Section 2: Credential Access
+
+## Flag 5 – Identify the Credential Harvesting File
+
+### Objective
+
+Determine which configuration file the attacker accessed after compromising the web server.
+
+### KQL Query
 
 ```kql
 DeviceProcessEvents_CL
@@ -111,96 +152,744 @@ DeviceProcessEvents_CL
 | order by TimeGenerated asc
 ```
 
-**Findings:**
-
-The attacker executed `cat /etc/semicrest/portal.conf` on `sc-portal01` at approximately 07:05 UTC. The file contained service account credentials associated with PostgreSQL and Harbor, making it a key target for credential harvesting.
-
-<img width="868" height="573" alt="Credential Harvesting" src="https://github.com/user-attachments/assets/0eea4c68-913c-4f41-b484-00bfab6aa062" />
+<img width="709" height="333" alt="image" src="https://github.com/user-attachments/assets/87b436a1-a35e-4bc2-b2b0-cfb10c3a5896" />
 
 
+### Findings
 
-### Query 3: PostgreSQL Activity – Investigating Database Connections
+The attacker executed `cat /etc/semicrest/portal.conf` on `sc-portal01` at approximately 07:05:15 UTC. The targeted file was an application configuration file associated with credentials used by internal services.
 
-This query examines PostgreSQL and system activity on `sc-db01` during a suspicious connection spike.
+### Investigation Reasoning
 
-```kql
-Syslog
-| where TimeGenerated between (datetime(2026-09-20 07:25:00) .. datetime(2026-09-20 07:35:00))
-| where Computer == "sc-db01"
-| project TimeGenerated, Computer, ProcessName, SyslogMessage
-| order by TimeGenerated asc
-```
-
-**Findings:**
-
-The query returned PostgreSQL activity, including SQL statements, scheduled maintenance tasks, and database connection events.
-
-Further investigation showed connection-limit errors alongside normal application queries. This helped distinguish the connection spike from confirmed attacker enumeration.
-
-<img width="910" height="818" alt="PostgreSQL Activity" src="https://github.com/user-attachments/assets/e73ec177-985f-4152-82e1-376809dfa761" />
+After confirming the initial compromise, I investigated commands executed on the affected server to determine what the attacker accessed next. The `cat` command showed that the configuration file was read during the credential-harvesting stage, helping connect the initial compromise to the attacker's later attempts to access internal systems.
 
 
-### Query 4: AI-Assisted Attack – Agent Tool Activity
 
-This query filters AI agent logs to display attack-related automated actions.
+---
+
+## Flag 6 – Identify the PostgreSQL Credentials
+
+### Objective
+
+Identify the database service account exposed during credential harvesting.
+
+### KQL Query
 
 ```kql
 LLMAgentLogs_CL
 | where TimeGenerated between (datetime(2026-10-24) .. datetime(2026-10-25))
 | where HuntName == "quartzfang"
-| where tool_name in (
-    "scan_complete",
-    "fuzz_schemes",
-    "adapt_payload",
-    "rce_confirmed",
-    "harvest_creds",
-    "query_database",
-    "inspect_registry"
-)
+| where tool_name == "harvest_creds"
 | project TimeGenerated, tool_name, tool_result
 | order by TimeGenerated asc
 ```
 
-**Findings:**
+<img width="734" height="188" alt="image" src="https://github.com/user-attachments/assets/8b9ce94e-4d58-49a6-9744-0bdf385a1c73" />
 
-The query identified seven AI agent activities involving:
 
-- **Reconnaissance:** `scan_complete`, `fuzz_schemes`
-- **Exploitation:** `adapt_payload`, `rce_confirmed`
-- **Credential Harvesting:** `harvest_creds`
-- **Database Access:** `query_database`
-- **Registry Investigation:** `inspect_registry`
+### Findings
 
-The results demonstrated how AI was used to automate different attack stages.
+The credential-harvesting investigation identified the PostgreSQL service account `portal_svc`, associated with the database destination `10.5.0.20:5432`. The password is intentionally excluded from this public report.
 
-However, some AI-generated claims were not verified by independent security logs, highlighting the importance of validating automated findings.
+### Investigation Reasoning
 
-<img width="835" height="567" alt="AI-Assisted Attack" src="https://github.com/user-attachments/assets/0dfb23c0-ce5e-45de-b9d6-895260fe6c63" />
+I reviewed the AI agent's credential-harvesting records and connected the identified service account to the configuration file accessed on the compromised server. This helped explain how the attacker obtained information that could be used to authenticate to the internal PostgreSQL database.
+
+---
+
+## Flag 7 – Identify the Harbor Registry Credentials
+
+### Objective
+
+Determine which account was used to access the Harbor container registry.
+
+### KQL Query
+
+```kql
+LLMAgentLogs_CL
+| where TimeGenerated between (datetime(2026-10-24) .. datetime(2026-10-25))
+| where HuntName == "quartzfang"
+| where tool_name == "harvest_creds"
+| project TimeGenerated, tool_name, tool_result
+```
+
+<img width="705" height="174" alt="image" src="https://github.com/user-attachments/assets/642ecc84-66a3-491c-a6cb-cc37d277c84c" />
+
+
+### Findings
+
+The investigation identified the `ci-builder` account associated with the Harbor container registry at `10.5.0.30`. This account was another set of service credentials referenced during the attacker's credential-harvesting activity.
+
+### Investigation Reasoning
+
+I examined the credential-harvesting results to determine whether the compromised configuration file exposed access to additional internal services. Identifying the Harbor service account helped explain how the attacker could move beyond the web application and begin exploring the container registry.
+
+---
+
+## Flag 8 – Investigate the Credential Visibility Gap
+
+### Objective
+
+Determine whether environment variables exposed additional credentials.
+
+### KQL Query
+
+```kql
+DeviceProcessEvents_CL
+| where DeviceName == "sc-portal01"
+| where TimeGenerated between (datetime(2026-09-20 07:00:00) .. datetime(2026-09-20 07:10:00))
+| where FileName == "env"
+    or ProcessCommandLine contains "env"
+| project TimeGenerated, FileName, ProcessCommandLine
+| order by TimeGenerated asc
+```
+
+<img width="763" height="267" alt="image" src="https://github.com/user-attachments/assets/bef2c5bd-2edc-4cc3-ae25-ab09d29526c6" />
+
+
+### Findings
+
+The attacker executed an environment-variable command, but the available logs did not capture its output. As a result, there was insufficient evidence to confirm whether additional credentials were successfully obtained through environment variables.
+
+### Investigation Reasoning
+
+I examined process execution records to determine whether the attacker attempted to collect credentials beyond those stored in the configuration file. Although the logs showed command execution, they did not reveal the actual environment-variable values, demonstrating why investigators must distinguish observed actions from confirmed outcomes.
+
+---
+
+# Section 3: Lateral Movement
+
+## Flag 9 – Identify Suspicious Database Behavior
+
+### Objective
+
+Determine how the attacker's PostgreSQL queries differed from legitimate application activity.
+
+### KQL Query
+
+```kql
+Syslog
+| where Computer == "sc-db01"
+| where TimeGenerated between (datetime(2026-09-20 07:00:00) .. datetime(2026-09-20 08:00:00))
+| where SyslogMessage contains "statement:"
+| project TimeGenerated, ProcessName, SyslogMessage
+| order by TimeGenerated asc
+```
+
+<img width="870" height="287" alt="image" src="https://github.com/user-attachments/assets/a26ae488-35b0-4f0f-b809-f7cbd9bafa58" />
+
+
+### Findings
+
+The attacker's database activity differed from normal application behavior through broader query scope and rapid execution. The suspicious queries involved multiple areas of the database rather than only the information normally required by the application.
+
+### Investigation Reasoning
+
+I compared the SQL statements associated with suspicious activity against ordinary application queries, focusing on the type of information requested and how quickly queries were executed. The broader query patterns and increased activity helped distinguish database enumeration from legitimate application operations.
+
+---
+
+## Flag 10 – Identify the Database Tables Queried
+
+### Objective
+
+Determine which PostgreSQL tables the attacker accessed.
+
+### KQL Query
+
+```kql
+Syslog
+| where Computer =~ "sc-db01"
+| where SyslogMessage has "statement: SELECT *" or SyslogMessage has "information_schema" or SyslogMessage has "pg_catalog"
+| project TimeGenerated, SyslogMessage
+```
+
+<img width="833" height="225" alt="image" src="https://github.com/user-attachments/assets/9f1a7538-1261-43b4-bbce-d9ea8cae881e" />
+
+
+### Findings
+
+The investigation identified suspicious queries involving the `customers`, `projects`, `users`, and `pg_catalog` tables. These queries covered application information as well as PostgreSQL system metadata.
+
+### Investigation Reasoning
+
+I examined the SQL statements to identify the tables referenced during the suspicious activity. Accessing information across several application tables and the PostgreSQL system catalog suggested broader database exploration rather than a limited set of routine application requests.
+
+---
+
+## Flag 11 – Investigate Container Registry Enumeration
+
+### Objective
+
+Identify suspicious operations performed against the internal Harbor container registry.
+
+### KQL Query
+
+```kql
+ContainerRegistryLog_CL
+| where Computer =~ "sc-registry01"
+| where Username == "ci-builder" and SrcIpAddr == "10.5.0.10"
+| project TimeGenerated, Operation, Repository, HttpStatusCode
+```
+
+<img width="618" height="173" alt="image" src="https://github.com/user-attachments/assets/3ca3a1b5-cbbe-4385-a728-ee1a7c8fc7ff" />
+
+
+### Findings
+
+The suspicious container registry activity involved operations such as `login`, `list_repository`, `pull_manifest`, and `inspect_layer`. These operations indicated that the attacker was exploring the registry and inspecting container-related resources.
+
+### Investigation Reasoning
+
+I compared registry activity associated with the compromised portal server against expected CI/CD operations. Legitimate automation primarily performed routine artifact operations, while the additional repository enumeration and image inspection activity suggested that the attacker was gathering information from the registry.
+
+---
+
+## Flag 12 – Investigate Administrative API Access
+
+### Objective
+
+Determine whether the attacker successfully accessed the administrative API secrets endpoint.
+
+### KQL Query
+
+```kql
+Syslog
+| where Computer =~ "sc-admin01"
+| where SyslogMessage has "secrets" and SyslogMessage has "10.5.0.10"
+| project TimeGenerated, SyslogMessage
+```
+
+<img width="668" height="143" alt="image" src="https://github.com/user-attachments/assets/811f9fb7-6254-46fd-85b9-879adade0312" />
+
+
+### Findings
+
+The investigation identified administrative API activity involving secrets-related requests originating from the compromised portal server at `10.5.0.10`. The attacker's request returned HTTP 403 Forbidden, indicating that access was denied.
+
+### Investigation Reasoning
+
+I searched the administrative server's Syslog records for messages containing both the secrets-related activity and the compromised portal server's IP address. This helped isolate the attacker's requests from other API activity, and the HTTP response provided evidence that the attempted access was unsuccessful.
+
+---
+
+# Section 4: AI Hallucination Investigation
+
+## Flag 13 – Verify the AI's Secrets Access Claim
+
+### Objective
+
+Determine whether the AI agent's claim of successfully accessing secrets was supported by actual security logs.
+
+### KQL Query
+
+```kql
+LLMAgentLogs_CL
+| where model_response has "secrets"
+| where TimeGenerated > datetime(2026-09-20T07:45:00Z)
+| project TimeGenerated, model_response
+```
+
+### Findings
+
+The AI agent reported information suggesting that sensitive secrets had been obtained. However, the administrative API evidence showed that the attacker's request was denied with an HTTP 403 response, leaving the claim unsupported by independent security logs.
+
+### Investigation Reasoning
+
+I searched the AI agent's responses for references to secrets and compared those statements with the administrative server's actual logs. The difference between the AI's reported success and the denied API request demonstrated why AI-generated findings should be validated against system telemetry before being considered accurate.
 
 ---
 
 
+## Flag 14 – Verify the Registry Credential Claim
+
+### Objective
+
+Determine whether the AI agent actually discovered administrative database credentials inside a container image layer.
+
+### KQL Query
+
+```kql
+ContainerRegistryLog_CL
+| where TimeGenerated between (datetime(2026-09-20 07:00:00) .. datetime(2026-09-20 08:30:00))
+| extend Evidence=tostring(pack_all())
+| where Evidence contains "inspect_layer"
+| project TimeGenerated, Evidence
+| order by TimeGenerated asc
+```
+
+<img width="1150" height="183" alt="image" src="https://github.com/user-attachments/assets/a6223624-f806-4f54-ba89-5d008230872f" />
+
+
+### Findings
+
+The registry logs showed that the `ci-builder` account performed an `inspect_layer` operation on `sc-registry01` at approximately 07:33 UTC, originating from `10.5.0.10`. Although the AI agent claimed it discovered administrative database credentials inside the image layer, the registry logs only confirmed that the inspection occurred and did not verify the reported credentials.
+
+### Investigation Reasoning
+
+I compared the AI agent's claim with the actual container registry activity to determine whether the reported credentials were supported by evidence. The logs confirmed the image-layer inspection but did not show that administrative credentials were retrieved. This indicated that the AI's claim was unverified and demonstrated why AI-generated findings must be checked against actual security logs.
+
+
+---
+
+
+## Flag 15 – Identify the Limitations of AI-Assisted Attacks
+
+### Objective
+
+Understand the limitations of AI-assisted attacks and why human involvement is still important.
+
+### KQL Query
+
+```kql
+LLMAgentLogs_CL
+| where isnotempty(user_input)
+| project TimeGenerated, user_input, model_response
+| order by TimeGenerated asc
+```
+
+### Findings
+
+The AI agent logs recorded human instructions alongside AI-generated responses. During the investigation, some AI-generated claims about accessing sensitive information were not supported by actual security logs, showing that the AI could produce inaccurate results.
+
+### Investigation Reasoning
+
+I compared the human operator's instructions with the AI agent's responses to understand how the attack was directed. I also considered the earlier findings where the AI claimed to obtain sensitive information without supporting evidence. This showed that AI could automate parts of the attack but still required human oversight to verify results and make important decisions.
+
+
+---
+
+# Section 5: Data Exfiltration and Persistence
+
+
+## Flag 16 – Investigate Data Exfiltration
+
+### Objective
+
+Identify the suspicious outbound network connection and the encrypted file associated with potential data exfiltration.
+
+### KQL Query 1 – Network Evidence
+
+```kql
+DeviceNetworkEvents_CL
+| where DeviceName =~ "sc-portal01"
+| where RemoteIP == "198.51.100.210"
+| project Timestamp, RemoteIP, RemotePort, InitiatingProcessFileName
+```
+<img width="691" height="199" alt="image" src="https://github.com/user-attachments/assets/393aba46-5690-4db0-b451-99982658bb6f" />
+
+
+### KQL Query 2 – File Evidence
+
+```kql
+DeviceFileEvents_CL
+| where DeviceName =~ "sc-portal01"
+| where FileName =~ "report.tar.gz.enc"
+| project Timestamp, FileName, FolderPath, ActionType
+```
+<img width="698" height="164" alt="image" src="https://github.com/user-attachments/assets/e97670c2-1d13-41e5-a739-ac7fd0e55cc8" />
+
+
+### Findings
+
+The investigation identified an outbound HTTPS connection from `sc-portal01` to `198.51.100.210:443`, along with an encrypted archive named `report.tar.gz.enc` stored under `/tmp/portal-cache/`. The archive was prepared before the suspicious connection, suggesting that the attacker may have staged collected information for exfiltration. However, the available evidence did not confirm the exact amount of data transferred.
+
+### Investigation Reasoning
+
+I examined the network logs to identify unusual outbound connections from the compromised server and compared them with file activity involving the encrypted archive. By correlating the archive's creation with the later connection to an external IP address, I identified a pattern consistent with possible data exfiltration. This provided stronger evidence than treating the HTTPS connection alone as malicious.
+
+
+---
+
+## Flag 17 – Identify Data Staging Commands
+
+### Objective
+
+Determine which commands the attacker used to prepare collected data.
+
+### KQL Query
+
+```kql
+DeviceProcessEvents_CL
+| where DeviceName == "sc-portal01"
+| where TimeGenerated between (datetime(2026-09-20 07:50:00) .. datetime(2026-09-20 08:15:00))
+| where FileName in ("tar", "gzip", "openssl")
+| project TimeGenerated, FileName, ProcessCommandLine
+| order by TimeGenerated asc
+```
+<img width="1090" height="224" alt="image" src="https://github.com/user-attachments/assets/fdb31206-a5fc-4278-bb71-239a0dc5976d" />
+
+
+### Findings
+
+The attacker used `tar`, `gzip`, and `openssl` to archive, compress, and encrypt data. The resulting staged archive was identified as `/tmp/portal-cache/report.tar.gz.enc`, which was prepared before the suspicious outbound connection.
+
+### Investigation Reasoning
+
+I reviewed the process execution sequence to determine how the attacker handled the collected information. The use of archiving, compression, and encryption tools suggested that data was being prepared for transfer, especially when correlated with the later outbound HTTPS connection.
+
+---
+
+## Flag 18 – Identify the Persistence Mechanism
+
+### Objective
+
+Determine how the attacker attempted to maintain access to the compromised system.
+
+### KQL Query
+
+```kql
+DeviceProcessEvents_CL
+| where DeviceName == "sc-portal01"
+| where TimeGenerated between (datetime(2026-09-20 08:20:00) .. datetime(2026-09-20 08:35:00))
+| where FileName in ("useradd", "usermod")
+| project TimeGenerated, FileName, ProcessCommandLine
+| order by TimeGenerated asc
+```
+<img width="577" height="201" alt="image" src="https://github.com/user-attachments/assets/345ee3d1-4acc-4332-874f-cdf8e7a79c09" />
+
+
+### Findings
+
+The attacker created a local account named `svc_monitor` and added it to the `sudo` group. This gave the newly created account elevated privileges on the compromised system.
+
+### Investigation Reasoning
+
+I investigated account creation and modification commands executed after the initial compromise. The unexpected creation of a privileged local account suggested that the attacker was attempting to establish a way to maintain access to the system.
+
+---
+
+## Flag 19 – Distinguish Exfiltration from Normal HTTPS Traffic
+
+### Objective
+
+Explain why the suspicious outbound connection differed from legitimate HTTPS communication.
+
+### KQL Query
+
+```kql
+DeviceProcessEvents_CL
+| where DeviceName == "sc-portal01"
+| where TimeGenerated between (datetime(2026-09-20 08:00:00) .. datetime(2026-09-20 08:20:00))
+| where FileName in ("tar", "gzip", "openssl", "curl")
+| project TimeGenerated, FileName, ProcessCommandLine
+| order by TimeGenerated asc
+```
+<img width="1084" height="369" alt="image" src="https://github.com/user-attachments/assets/6fb46bb2-0e5f-48fa-aae0-10d73bc75def" />
+
+
+### Findings
+
+The suspicious HTTPS connection occurred after encrypted archive preparation and targeted an unusual external IP address. These surrounding activities made the connection more concerning than ordinary application traffic over port 443.
+
+### Investigation Reasoning
+
+HTTPS traffic alone is not enough to classify an event as malicious, so I examined the surrounding process and file activity. The relationship between encrypted data staging, connection timing, and the external destination provided stronger evidence of possible exfiltration.
+
+---
+
+# Section 6: Reconnaissance and Automation
+
+## Flag 20 – Identify Scanning IP Addresses
+
+### Objective
+
+Identify suspicious external scanning sources and the legitimate internal vulnerability scanner.
+
+### KQL Query
+
+```kql
+PortalAccessLog_CL
+| where TimeGenerated between (datetime(2026-09-20 06:00:00) .. datetime(2026-09-20 07:00:00))
+| summarize RequestCount=count() by SrcIpAddr
+| order by RequestCount desc
+```
+
+<img width="416" height="644" alt="image" src="https://github.com/user-attachments/assets/492b9cc3-f422-4a95-bc7d-8e0332a0b2a2" />
+
+
+### Findings
+
+The external scanning addresses included `198.51.100.31`, `198.51.100.45`, and `198.51.100.62`, while the legitimate internal Nessus scanner used `10.5.0.250`. These sources generated web requests during the reconnaissance period.
+
+### Investigation Reasoning
+
+I grouped web requests by their source addresses to identify systems generating repeated scanning activity. I then compared those addresses against the known internal vulnerability scanner to distinguish external reconnaissance from authorized scanning.
+
+---
+
+## Flag 21 – Distinguish Attacker Scanning from Nessus Activity
+
+### Objective
+
+Identify the differences between suspicious reconnaissance and legitimate vulnerability scanning.
+
+### KQL Query
+
+```kql
+PortalAccessLog_CL
+| where TimeGenerated between (datetime(2026-09-20 06:00:00) .. datetime(2026-09-20 07:00:00))
+| summarize
+    RequestCount=count(),
+    Agents=make_set(UserAgent),
+    StatusCodes=make_set(HttpStatusCode)
+    by SrcIpAddr
+| order by RequestCount desc
+```
+<img width="978" height="646" alt="image" src="https://github.com/user-attachments/assets/d9755e78-8b6e-4c93-a78c-1691a90a812f" />
+
+
+### Findings
+
+The external scanning activity commonly used `python-requests/2.31.0`, while legitimate internal scanning used `Nessus/10.6.2`. The external traffic also showed rapid request bursts and unsuccessful HTTP responses.
+
+### Investigation Reasoning
+
+I compared the user agents, source addresses, request frequency, and HTTP responses to understand the purpose of the activity. The differences between the external requests and expected Nessus behavior helped distinguish suspicious reconnaissance from authorized vulnerability scanning.
+
+---
+
+## Flag 22 – Identify Machine-Speed Automation
+
+### Objective
+
+Determine whether the scanning activity appeared automated or manually executed.
+
+### KQL Query
+
+```kql
+PortalAccessLog_CL
+| where TimeGenerated between (datetime(2026-09-20 06:00:00) .. datetime(2026-09-20 07:00:00))
+| where SrcIpAddr in (
+    "198.51.100.31",
+    "198.51.100.45",
+    "198.51.100.62"
+)
+| summarize RequestCount=count()
+    by SrcIpAddr, bin(TimeGenerated, 1s)
+| order by RequestCount desc
+```
+
+### Findings
+
+The web access logs showed multiple requests occurring within individual seconds, often following repeated patterns. This behavior was consistent with automated scanning rather than individual manual requests.
+
+### Investigation Reasoning
+
+I grouped requests into one-second intervals to examine how quickly the scanning activity occurred. The rapid and repetitive nature of the traffic suggested automation, although duplicate log records could affect the exact request counts.
+
+---
+
+# Section 7: AI Autonomy and MITRE ATT&CK
+
+## Flag 23 – Investigate Human Decision Gates
+
+### Objective
+
+Identify where the human operator gave instructions or authorized the next stage of the attack.
+
+### KQL Query
+
+```kql
+LLMAgentLogs_CL
+| where TimeGenerated between (datetime(2026-10-24) .. datetime(2026-10-25))
+| where HuntName == "quartzfang"
+| where isnotempty(user_input)
+| project TimeGenerated, user_input, gate_decision
+| order by TimeGenerated asc
+```
+
+<img width="873" height="682" alt="image" src="https://github.com/user-attachments/assets/07eb45f2-c78f-4831-9794-cd6fce7cfe40" />
+
+
+### Findings
+
+The AI agent logs contained human instructions involving initial reconnaissance, credential harvesting, lateral movement, data collection, staging, and exfiltration. These instructions showed that human involvement continued throughout important parts of the operation.
+
+### Investigation Reasoning
+
+I reviewed the AI agent's input records to identify instructions that directed or approved different stages of the attack. The presence of these instructions demonstrated that the AI performed technical activities while a human operator remained involved in major decisions. The exact number recognized by the lab as formal decision gates was not conclusively verified.
+
+---
+
+
+## Flag 24 – Determine the Level of AI Autonomy
+
+### Objective
+
+Determine whether the attack was controlled by a human, executed autonomously, or involved both human decisions and AI automation.
+
+### KQL Query 1 – Human Involvement
+
+```kql
+LLMAgentLogs_CL
+| where isnotempty(user_input)
+| project TimeGenerated, user_input
+```
+<img width="1131" height="684" alt="image" src="https://github.com/user-attachments/assets/df40c298-0105-4d90-b900-7c5504b48378" />
+
+
+### KQL Query 2 – Machine-Speed Execution
+
+```kql
+PortalAccessLog_CL
+| where Computer =~ "sc-portal01"
+| where SrcIpAddr == "203.0.113.87"
+| where TimeGenerated between (datetime(2026-09-20T06:52:00Z) .. datetime(2026-09-20T06:53:00Z))
+| project TimeGenerated, UrlOriginal, HttpStatusCode
+```
+
+<img width="1132" height="178" alt="image" src="https://github.com/user-attachments/assets/853c3bfd-f232-4630-b6c8-73a9474f0d0c" />
+
+
+### Findings
+
+The attack was classified as **human-directed and AI-executed**. The AI agent logs showed five human operator instructions, while the web access logs revealed rapid exploitation attempts, including an 18-second adjustment between requests. This demonstrated that humans made important decisions while the AI handled much of the technical execution.
+
+### Investigation Reasoning
+
+I compared human instructions in `LLMAgentLogs_CL.user_input` with the rapid web requests recorded in `PortalAccessLog_CL.TimeGenerated`. The human instructions showed that an operator directed the attack at important stages, while the fast request patterns demonstrated automated execution. This helped me determine that the operation was human-assisted rather than completely manual or fully autonomous.
+
+
+## Flag 25 – Identify the Novel MITRE ATT&CK Technique
+
+### Objective
+
+Identify the MITRE ATT&CK technique associated with acquiring AI capabilities for offensive purposes.
+
+### KQL Query
+
+```kql
+LLMAgentLogs_CL
+| where TimeGenerated between (datetime(2026-10-24) .. datetime(2026-10-25))
+| where HuntName == "quartzfang"
+| where isnotempty(tool_name)
+| summarize
+    TotalEvents=count(),
+    Tools=make_set(tool_name)
+```
+
+### Findings
+
+The relevant MITRE ATT&CK technique was **T1588.007 – Obtain Capabilities: Artificial Intelligence**, which belongs to the Resource Development tactic and addresses acquiring AI capabilities for offensive use.
+
+### Investigation Reasoning
+
+I used the question's reference to Resource Development and offensive AI capabilities to locate the appropriate MITRE ATT&CK technique. The AI agent logs supported the presence of AI-assisted activity, while the MITRE ATT&CK framework provided the actual technique classification.
+
+
+---
+
+# Section 8: Real or Noise – False Positive Investigation
+
+## Flag 26 – Investigate Credential Reuse Across Services
+
+### Objective
+
+Determine how to distinguish legitimate `portal_svc` activity from attacker activity.
+
+### KQL Query
+
+```kql
+Syslog
+| where Computer == "sc-db01"
+| where TimeGenerated between (datetime(2026-09-19) .. datetime(2026-09-21))
+| where SyslogMessage contains "portal_svc"
+| project TimeGenerated, SyslogMessage
+| order by TimeGenerated asc
+```
+<img width="936" height="516" alt="image" src="https://github.com/user-attachments/assets/70a701b7-2f18-41ae-a188-8085f7dc4384" />
+
+
+### Findings
+
+The primary distinguishing property was the source IP address or originating host. Although both the attacker and legitimate application used the `portal_svc` account, their activity could be investigated based on where the sessions originated.
+
+### Investigation Reasoning
+
+I examined the source of the database connections because the account name alone could not distinguish malicious activity from expected application behavior. Comparing the originating systems helped identify suspicious sessions without assuming that every use of the shared service account was malicious.
+
+---
+
+## Flag 27 – Investigate the Nightly PostgreSQL Backup
+
+### Objective
+
+Determine whether the scheduled `pg_dump` backup was associated with the intrusion.
+
+### KQL Query
+
+```kql
+Syslog
+| where TimeGenerated between (datetime(2026-09-18) .. datetime(2026-09-21))
+| where Computer == "sc-db01"
+| where SyslogMessage contains "pg_dump"
+| project TimeGenerated, Computer, ProcessName, SyslogMessage
+| order by TimeGenerated asc
+```
+<img width="1037" height="222" alt="image" src="https://github.com/user-attachments/assets/26a1661c-cdb6-40c9-94a0-ae0f453e96e0" />
+
+
+### Findings
+
+The PostgreSQL backup was identified as legitimate baseline activity. The logs showed that the backup ran at approximately 03:00 and that similar activity had occurred before the intrusion, making it consistent with an established backup schedule.
+
+### Investigation Reasoning
+
+Although the backup used the same service account involved in the attack, I reviewed historical logs to determine whether the activity existed before the compromise. The recurring schedule helped demonstrate that the backup was a normal system operation rather than part of the attack.
+
+---
+
+## Flag 28 – Investigate the PostgreSQL Connection Spike
+
+### Objective
+
+Determine whether the PostgreSQL connection spike around 07:30 was part of the attack.
+
+### KQL Query
+
+```kql
+Syslog
+| where Computer == "sc-db01"
+| where TimeGenerated between (datetime(2026-09-20 07:29:00) .. datetime(2026-09-20 07:35:00))
+| where SyslogMessage has_any (
+    "statement",
+    "connection",
+    "FATAL"
+)
+| summarize EventCount=count() by SyslogMessage
+| order by EventCount desc
+```
+<img width="1134" height="283" alt="image" src="https://github.com/user-attachments/assets/874a16b2-209f-4e9d-b48c-4f5dce1deb52" />
+
+
+### Findings
+
+The connection spike was classified as noise associated with database connection exhaustion. The logs included errors such as `FATAL: sorry, too many clients already`, along with ordinary application SQL statements that differed from the attacker's earlier enumeration queries.
+
+### Investigation Reasoning
+
+The high connection volume initially appeared suspicious because it resembled automated database enumeration. However, after examining the SQL statements and connection-limit errors, I found that the visible activity was consistent with an application-related connection exhaustion event. This demonstrated why the content and context of database activity are more important than connection volume alone.
+
+
+---
+
+# Overall Investigation Summary
+
+Operation QUARTZFANG involved a simulated AI-assisted cyberattack against SemiCrest Technologies. Throughout the investigation, I analyzed web application exploitation, remote code execution, credential harvesting, lateral movement, database enumeration, suspicious outbound network activity, persistence, and AI-assisted execution.
+
+The investigation also demonstrated the importance of independently verifying AI-generated claims and distinguishing legitimate system operations from malicious activity. By correlating evidence across multiple log sources, I was able to reconstruct the attacker's actions and identify areas where the available telemetry did not support a definitive conclusion.
+
 ## Skills Demonstrated
 
-- Threat hunting and incident investigation.
-- Writing and troubleshooting KQL queries.
-- Investigating credential theft and lateral movement.
-- Analyzing suspicious processes and database activity.
-- Correlating evidence across multiple log sources.
-- Investigating AI-assisted cyberattacks.
-- Identifying false positives through baseline analysis.
-- Applying the MITRE ATT&CK framework.
-
-## Conclusion
-
-Operation QUARTZFANG helped me gain practical experience investigating a simulated cyberattack using **Microsoft Azure Log Analytics and KQL**.
-
-I learned how to trace suspicious activity across multiple systems, investigate attacker techniques, and verify findings using different security logs.
-
-One of my biggest takeaways was that **not every suspicious event is malicious**, and AI-generated information should always be verified against actual evidence.
-
-This project strengthened my understanding of SOC operations, threat hunting, and incident investigation.
-
-
+- Writing and troubleshooting KQL queries
+- Investigating security alerts using Azure Log Analytics
+- Correlating web, endpoint, database, and network logs
+- Identifying credential access and lateral movement
+- Investigating persistence and possible exfiltration
+- Evaluating AI-generated security information
+- Distinguishing legitimate activity from malicious behavior
+- Using MITRE ATT&CK to categorize attacker techniques
+- Documenting technical findings and supporting evidence
 
 ---
