@@ -182,7 +182,7 @@ However, some AI-generated claims were not verified by independent security logs
 
 ## Skills Demonstrated
 
-- SOC threat hunting and incident investigation.
+- Threat hunting and incident investigation.
 - Writing and troubleshooting KQL queries.
 - Investigating credential theft and lateral movement.
 - Analyzing suspicious processes and database activity.
