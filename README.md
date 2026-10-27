@@ -1,7 +1,6 @@
 
 # Operation QUARTZFANG – Complete Threat Hunting Investigation Report
 
-**Microsoft Azure | KQL | SOC Investigation | MITRE ATT&CK**
 
 ## Project Overview
 
