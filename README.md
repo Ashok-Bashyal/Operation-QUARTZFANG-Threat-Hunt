@@ -61,7 +61,7 @@ PortalAccessLog_CL
 | order by TimeGenerated asc
 ```
 
-<img width="1142" height="165" alt="image" src="https://github.com/user-attachments/assets/b98bb969-a650-4eba-beb0-39aee0984f3b" />
+<img width="1151" height="329" alt="image" src="https://github.com/user-attachments/assets/cfed2e2c-16ce-405d-bac0-aa7126a43558" />
 
 
 ### Findings
@@ -89,7 +89,7 @@ PortalAccessLog_CL
 | order by RequestCount desc
 ```
 
-<img width="610" height="172" alt="image" src="https://github.com/user-attachments/assets/1cce2586-c32d-4901-91f9-33942a9e71c9" />
+<img width="404" height="156" alt="image" src="https://github.com/user-attachments/assets/6be07806-f654-4962-969b-c9057c40bd48" />
 
 
 ### Findings
@@ -118,7 +118,7 @@ DeviceProcessEvents_CL
 | order by TimeGenerated asc
 ```
 
-<img width="857" height="190" alt="image" src="https://github.com/user-attachments/assets/c0e60cae-8a54-4f3e-8365-433d4c9df7b5" />
+<img width="865" height="300" alt="image" src="https://github.com/user-attachments/assets/dce28ed0-53de-430c-a3b2-08ef32c1cdd1" />
 
 
 ### Findings
@@ -152,7 +152,7 @@ DeviceProcessEvents_CL
 | order by TimeGenerated asc
 ```
 
-<img width="709" height="333" alt="image" src="https://github.com/user-attachments/assets/87b436a1-a35e-4bc2-b2b0-cfb10c3a5896" />
+<img width="673" height="241" alt="image" src="https://github.com/user-attachments/assets/463d6be0-d1ad-445b-bfbd-f719eb0a21ae" />
 
 
 ### Findings
@@ -184,7 +184,7 @@ LLMAgentLogs_CL
 | order by TimeGenerated asc
 ```
 
-<img width="734" height="188" alt="image" src="https://github.com/user-attachments/assets/8b9ce94e-4d58-49a6-9744-0bdf385a1c73" />
+<img width="675" height="180" alt="image" src="https://github.com/user-attachments/assets/955e4b2b-ad30-45da-a3ac-b8a3214eb9ec" />
 
 
 ### Findings
@@ -213,7 +213,7 @@ LLMAgentLogs_CL
 | project TimeGenerated, tool_name, tool_result
 ```
 
-<img width="705" height="174" alt="image" src="https://github.com/user-attachments/assets/642ecc84-66a3-491c-a6cb-cc37d277c84c" />
+<img width="714" height="173" alt="image" src="https://github.com/user-attachments/assets/66a8d3de-fc93-432e-8f09-d1b6cdc0651d" />
 
 
 ### Findings
@@ -244,7 +244,7 @@ DeviceProcessEvents_CL
 | order by TimeGenerated asc
 ```
 
-<img width="763" height="267" alt="image" src="https://github.com/user-attachments/assets/bef2c5bd-2edc-4cc3-ae25-ab09d29526c6" />
+<img width="825" height="268" alt="image" src="https://github.com/user-attachments/assets/4a7e3782-1ad0-47b0-9cbb-665e134fa410" />
 
 
 ### Findings
@@ -276,7 +276,7 @@ Syslog
 | order by TimeGenerated asc
 ```
 
-<img width="870" height="287" alt="image" src="https://github.com/user-attachments/assets/a26ae488-35b0-4f0f-b809-f7cbd9bafa58" />
+<img width="947" height="543" alt="image" src="https://github.com/user-attachments/assets/17f232f0-39ad-4814-8d6e-116e049b02f7" />
 
 
 ### Findings
@@ -304,7 +304,7 @@ Syslog
 | project TimeGenerated, SyslogMessage
 ```
 
-<img width="833" height="225" alt="image" src="https://github.com/user-attachments/assets/9f1a7538-1261-43b4-bbce-d9ea8cae881e" />
+<img width="833" height="211" alt="image" src="https://github.com/user-attachments/assets/7a36d9b2-4515-4e01-8315-0fa22acbcd57" />
 
 
 ### Findings
@@ -332,7 +332,7 @@ ContainerRegistryLog_CL
 | project TimeGenerated, Operation, Repository, HttpStatusCode
 ```
 
-<img width="618" height="173" alt="image" src="https://github.com/user-attachments/assets/3ca3a1b5-cbbe-4385-a728-ee1a7c8fc7ff" />
+<img width="707" height="192" alt="image" src="https://github.com/user-attachments/assets/62e85f55-f77d-4617-bb1f-1cfdadf447c7" />
 
 
 ### Findings
@@ -360,7 +360,7 @@ Syslog
 | project TimeGenerated, SyslogMessage
 ```
 
-<img width="668" height="143" alt="image" src="https://github.com/user-attachments/assets/811f9fb7-6254-46fd-85b9-879adade0312" />
+<img width="613" height="160" alt="image" src="https://github.com/user-attachments/assets/8709782d-0935-48a7-be9e-06436aacd2ea" />
 
 
 ### Findings
@@ -389,6 +389,8 @@ LLMAgentLogs_CL
 | where TimeGenerated > datetime(2026-09-20T07:45:00Z)
 | project TimeGenerated, model_response
 ```
+<img width="1138" height="282" alt="image" src="https://github.com/user-attachments/assets/9abf5eab-60bc-488d-84dc-95d4d838bc7e" />
+
 
 ### Findings
 
@@ -418,7 +420,7 @@ ContainerRegistryLog_CL
 | order by TimeGenerated asc
 ```
 
-<img width="1150" height="183" alt="image" src="https://github.com/user-attachments/assets/a6223624-f806-4f54-ba89-5d008230872f" />
+<img width="1148" height="193" alt="image" src="https://github.com/user-attachments/assets/755f858d-7742-416c-8ac9-5accef5cd945" />
 
 
 ### Findings
@@ -476,7 +478,7 @@ DeviceNetworkEvents_CL
 | where RemoteIP == "198.51.100.210"
 | project Timestamp, RemoteIP, RemotePort, InitiatingProcessFileName
 ```
-<img width="691" height="199" alt="image" src="https://github.com/user-attachments/assets/393aba46-5690-4db0-b451-99982658bb6f" />
+<img width="675" height="229" alt="image" src="https://github.com/user-attachments/assets/72dd3bc9-387e-49f5-9bea-d03f8023bcf9" />
 
 
 ### KQL Query 2 – File Evidence
@@ -487,7 +489,7 @@ DeviceFileEvents_CL
 | where FileName =~ "report.tar.gz.enc"
 | project Timestamp, FileName, FolderPath, ActionType
 ```
-<img width="698" height="164" alt="image" src="https://github.com/user-attachments/assets/e97670c2-1d13-41e5-a739-ac7fd0e55cc8" />
+<img width="686" height="193" alt="image" src="https://github.com/user-attachments/assets/3a257b49-96d9-4d37-aaae-a2a94593cca2" />
 
 
 ### Findings
@@ -517,7 +519,7 @@ DeviceProcessEvents_CL
 | project TimeGenerated, FileName, ProcessCommandLine
 | order by TimeGenerated asc
 ```
-<img width="1090" height="224" alt="image" src="https://github.com/user-attachments/assets/fdb31206-a5fc-4278-bb71-239a0dc5976d" />
+<img width="1107" height="260" alt="image" src="https://github.com/user-attachments/assets/d4e3b8a5-641d-47f7-930d-42d439e510f2" />
 
 
 ### Findings
@@ -546,7 +548,7 @@ DeviceProcessEvents_CL
 | project TimeGenerated, FileName, ProcessCommandLine
 | order by TimeGenerated asc
 ```
-<img width="577" height="201" alt="image" src="https://github.com/user-attachments/assets/345ee3d1-4acc-4332-874f-cdf8e7a79c09" />
+<img width="597" height="179" alt="image" src="https://github.com/user-attachments/assets/60db4ed4-b5d0-475a-8e85-cf3ee169fae8" />
 
 
 ### Findings
@@ -575,7 +577,7 @@ DeviceProcessEvents_CL
 | project TimeGenerated, FileName, ProcessCommandLine
 | order by TimeGenerated asc
 ```
-<img width="1084" height="369" alt="image" src="https://github.com/user-attachments/assets/6fb46bb2-0e5f-48fa-aae0-10d73bc75def" />
+<img width="1086" height="274" alt="image" src="https://github.com/user-attachments/assets/cef1012f-3acb-46f7-834a-8754f7e72ef5" />
 
 
 ### Findings
@@ -605,7 +607,7 @@ PortalAccessLog_CL
 | order by RequestCount desc
 ```
 
-<img width="416" height="644" alt="image" src="https://github.com/user-attachments/assets/492b9cc3-f422-4a95-bc7d-8e0332a0b2a2" />
+<img width="445" height="653" alt="image" src="https://github.com/user-attachments/assets/5336e8cf-9591-47af-b834-7b184bc8e650" />
 
 
 ### Findings
@@ -636,7 +638,7 @@ PortalAccessLog_CL
     by SrcIpAddr
 | order by RequestCount desc
 ```
-<img width="978" height="646" alt="image" src="https://github.com/user-attachments/assets/d9755e78-8b6e-4c93-a78c-1691a90a812f" />
+<img width="935" height="653" alt="image" src="https://github.com/user-attachments/assets/59a90bd2-c0f2-45ee-ad54-a0ee9bc1ae97" />
 
 
 ### Findings
@@ -699,7 +701,7 @@ LLMAgentLogs_CL
 | order by TimeGenerated asc
 ```
 
-<img width="873" height="682" alt="image" src="https://github.com/user-attachments/assets/07eb45f2-c78f-4831-9794-cd6fce7cfe40" />
+<img width="903" height="647" alt="image" src="https://github.com/user-attachments/assets/fe52fdb7-b815-4665-bb3e-396449d1cf00" />
 
 
 ### Findings
@@ -726,7 +728,7 @@ LLMAgentLogs_CL
 | where isnotempty(user_input)
 | project TimeGenerated, user_input
 ```
-<img width="1131" height="684" alt="image" src="https://github.com/user-attachments/assets/df40c298-0105-4d90-b900-7c5504b48378" />
+<img width="1136" height="541" alt="image" src="https://github.com/user-attachments/assets/b65e1bea-1069-49b8-8084-249ed2a1da56" />
 
 
 ### KQL Query 2 – Machine-Speed Execution
@@ -739,7 +741,7 @@ PortalAccessLog_CL
 | project TimeGenerated, UrlOriginal, HttpStatusCode
 ```
 
-<img width="1132" height="178" alt="image" src="https://github.com/user-attachments/assets/853c3bfd-f232-4630-b6c8-73a9474f0d0c" />
+<img width="1122" height="175" alt="image" src="https://github.com/user-attachments/assets/58ba94e3-02ba-4b03-b9e2-d9fe1de8556f" />
 
 
 ### Findings
@@ -798,7 +800,7 @@ Syslog
 | project TimeGenerated, SyslogMessage
 | order by TimeGenerated asc
 ```
-<img width="936" height="516" alt="image" src="https://github.com/user-attachments/assets/70a701b7-2f18-41ae-a188-8085f7dc4384" />
+<img width="1075" height="463" alt="image" src="https://github.com/user-attachments/assets/ea45e1a6-e5f8-4548-8ee6-7f19027c5d1f" />
 
 
 ### Findings
@@ -827,7 +829,7 @@ Syslog
 | project TimeGenerated, Computer, ProcessName, SyslogMessage
 | order by TimeGenerated asc
 ```
-<img width="1037" height="222" alt="image" src="https://github.com/user-attachments/assets/26a1661c-cdb6-40c9-94a0-ae0f453e96e0" />
+<img width="1012" height="222" alt="image" src="https://github.com/user-attachments/assets/f7adb8ab-25de-425f-8e50-f672fb4202e7" />
 
 
 ### Findings
@@ -860,7 +862,8 @@ Syslog
 | summarize EventCount=count() by SyslogMessage
 | order by EventCount desc
 ```
-<img width="1134" height="283" alt="image" src="https://github.com/user-attachments/assets/874a16b2-209f-4e9d-b48c-4f5dce1deb52" />
+
+<img width="1137" height="482" alt="image" src="https://github.com/user-attachments/assets/67c0c8c1-ceda-4ed3-93ba-6e1485e9ca9e" />
 
 
 ### Findings
