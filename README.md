@@ -1,5 +1,4 @@
-
-# Operation QUARTZFANG – Complete Threat Hunting Investigation Report
+# Threat Hunt Operation QUARTZFANG
 
 
 ## Project Overview
