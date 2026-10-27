@@ -18,7 +18,7 @@ This report documents all 28 investigation flags across eight sections, includin
 
 # Section 1: Initial Access
 
-## Flag 1 – Identify the Vulnerable Endpoint
+## Flag 1 – Vulnerable endpoint
 
 ### Objective
 
@@ -46,7 +46,7 @@ I started by searching the web access logs around the alert timestamp and compar
 
 ---
 
-## Flag 2 – Investigate the Exploitation Attempts
+## Flag 2 – The Self-correct
 
 ### Objective
 
@@ -74,7 +74,7 @@ I compared the timestamps and HTTP response codes of the suspicious requests to 
 
 ---
 
-## Flag 3 – Identify the Attacker's Source IP
+## Flag 3 – Exploit source
 
 ### Objective
 
@@ -102,7 +102,7 @@ I grouped requests by their source IP addresses to identify which systems were c
 
 ---
 
-## Flag 4 – Confirm Remote Code Execution
+## Flag 4 – Exploitation chain
 
 ### Objective
 
@@ -132,9 +132,9 @@ A successful HTTP request alone does not prove that a server was compromised, so
 
 ---
 
-# Section 2: Credential Access
+# Section 2: Credential Harvest
 
-## Flag 5 – Identify the Credential Harvesting File
+## Flag 5 – Configuration file and process tree
 
 ### Objective
 
@@ -167,7 +167,7 @@ After confirming the initial compromise, I investigated commands executed on the
 
 ---
 
-## Flag 6 – Identify the PostgreSQL Credentials
+## Flag 6 – Database credential
 
 ### Objective
 
@@ -197,7 +197,7 @@ I reviewed the AI agent's credential-harvesting records and connected the identi
 
 ---
 
-## Flag 7 – Identify the Harbor Registry Credentials
+## Flag 7 – Registry credential
 
 ### Objective
 
@@ -226,7 +226,7 @@ I examined the credential-harvesting results to determine whether the compromise
 
 ---
 
-## Flag 8 – Investigate the Credential Visibility Gap
+## Flag 8 – Visibility Gap
 
 ### Objective
 
@@ -259,7 +259,7 @@ I examined process execution records to determine whether the attacker attempted
 
 # Section 3: Lateral Movement
 
-## Flag 9 – Identify Suspicious Database Behavior
+## Flag 9 – Database query discrimination
 
 ### Objective
 
@@ -289,7 +289,7 @@ I compared the SQL statements associated with suspicious activity against ordina
 
 ---
 
-## Flag 10 – Identify the Database Tables Queried
+## Flag 10 – Queried tables
 
 ### Objective
 
@@ -317,7 +317,7 @@ I examined the SQL statements to identify the tables referenced during the suspi
 
 ---
 
-## Flag 11 – Investigate Container Registry Enumeration
+## Flag 11 – Registry enumeration
 
 ### Objective
 
@@ -345,7 +345,7 @@ I compared registry activity associated with the compromised portal server again
 
 ---
 
-## Flag 12 – Investigate Administrative API Access
+## Flag 12 – Admin API response
 
 ### Objective
 
@@ -373,9 +373,9 @@ I searched the administrative server's Syslog records for messages containing bo
 
 ---
 
-# Section 4: AI Hallucination Investigation
+# Section 4: AI Hallucination
 
-## Flag 13 – Verify the AI's Secrets Access Claim
+## Flag 13 – Secrets store Hallucination
 
 ### Objective
 
@@ -401,7 +401,7 @@ I searched the AI agent's responses for references to secrets and compared those
 ---
 
 
-## Flag 14 – Verify the Registry Credential Claim
+## Flag 14 – Registry credential hallucination
 
 ### Objective
 
@@ -433,7 +433,7 @@ I compared the AI agent's claim with the actual container registry activity to d
 ---
 
 
-## Flag 15 – Identify the Limitations of AI-Assisted Attacks
+## Flag 15 – Hallucination as autonomy limitation
 
 ### Objective
 
@@ -462,7 +462,7 @@ I compared the human operator's instructions with the AI agent's responses to un
 # Section 5: Data Exfiltration and Persistence
 
 
-## Flag 16 – Investigate Data Exfiltration
+## Flag 16 – Exfil destination and staging path
 
 ### Objective
 
@@ -501,7 +501,7 @@ I examined the network logs to identify unusual outbound connections from the co
 
 ---
 
-## Flag 17 – Identify Data Staging Commands
+## Flag 17 – Staging tools
 
 ### Objective
 
@@ -530,7 +530,7 @@ I reviewed the process execution sequence to determine how the attacker handled 
 
 ---
 
-## Flag 18 – Identify the Persistence Mechanism
+## Flag 18 – Persistence Mechanism
 
 ### Objective
 
@@ -559,7 +559,7 @@ I investigated account creation and modification commands executed after the ini
 
 ---
 
-## Flag 19 – Distinguish Exfiltration from Normal HTTPS Traffic
+## Flag 19 – Exfil vs legitimate HTTPS
 
 ### Objective
 
@@ -588,9 +588,9 @@ HTTPS traffic alone is not enough to classify an event as malicious, so I examin
 
 ---
 
-# Section 6: Reconnaissance and Automation
+# Section 6: Reconnaissance and Timing
 
-## Flag 20 – Identify Scanning IP Addresses
+## Flag 20 – Scanner IPs
 
 ### Objective
 
@@ -618,7 +618,7 @@ I grouped web requests by their source addresses to identify systems generating 
 
 ---
 
-## Flag 21 – Distinguish Attacker Scanning from Nessus Activity
+## Flag 21 – Recon vs Nessus discrimination
 
 ### Objective
 
@@ -649,7 +649,7 @@ I compared the user agents, source addresses, request frequency, and HTTP respon
 
 ---
 
-## Flag 22 – Identify Machine-Speed Automation
+## Flag 22 – Timing signature
 
 ### Objective
 
@@ -680,9 +680,9 @@ I grouped requests into one-second intervals to examine how quickly the scanning
 
 ---
 
-# Section 7: AI Autonomy and MITRE ATT&CK
+# Section 7: Autonomy
 
-## Flag 23 – Investigate Human Decision Gates
+## Flag 23 – Operator decision gates
 
 ### Objective
 
@@ -713,7 +713,7 @@ I reviewed the AI agent's input records to identify instructions that directed o
 ---
 
 
-## Flag 24 – Determine the Level of AI Autonomy
+## Flag 24 – Autonomy placement
 
 ### Objective
 
@@ -751,7 +751,7 @@ The attack was classified as **human-directed and AI-executed**. The AI agent lo
 I compared human instructions in `LLMAgentLogs_CL.user_input` with the rapid web requests recorded in `PortalAccessLog_CL.TimeGenerated`. The human instructions showed that an operator directed the attack at important stages, while the fast request patterns demonstrated automated execution. This helped me determine that the operation was human-assisted rather than completely manual or fully autonomous.
 
 
-## Flag 25 – Identify the Novel MITRE ATT&CK Technique
+## Flag 25 – Novel ATT&CK technique
 
 ### Objective
 
@@ -780,9 +780,9 @@ I used the question's reference to Resource Development and offensive AI capabil
 
 ---
 
-# Section 8: Real or Noise – False Positive Investigation
+# Section 8: Real or Noise
 
-## Flag 26 – Investigate Credential Reuse Across Services
+## Flag 26 – Credential reuse across services (Real or Noise)
 
 ### Objective
 
@@ -811,7 +811,7 @@ I examined the source of the database connections because the account name alone
 
 ---
 
-## Flag 27 – Investigate the Nightly PostgreSQL Backup
+## Flag 27 – pg_dump disconfirmation
 
 ### Objective
 
@@ -840,7 +840,7 @@ Although the backup used the same service account involved in the attack, I revi
 
 ---
 
-## Flag 28 – Investigate the PostgreSQL Connection Spike
+## Flag 28 – Connection spike dead end
 
 ### Objective
 
