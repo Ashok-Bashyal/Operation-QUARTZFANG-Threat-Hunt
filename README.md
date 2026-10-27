@@ -33,7 +33,7 @@ PortalAccessLog_CL
 | order by TimeGenerated asc
 ```
 
-<img width="911" height="515" alt="images" src="https://github.com/user-attachments/assets/b721e51a-3f2e-4da5-8174-e278e636ebba" />
+<img width="1167" height="518" alt="image" src="https://github.com/user-attachments/assets/b897a17b-eb70-4f37-8da1-607946ae368d" />
 
 
 ### Findings
