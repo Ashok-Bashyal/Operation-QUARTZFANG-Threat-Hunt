@@ -881,16 +881,5 @@ Operation QUARTZFANG involved a simulated AI-assisted cyberattack against SemiCr
 
 The investigation also demonstrated the importance of independently verifying AI-generated claims and distinguishing legitimate system operations from malicious activity. By correlating evidence across multiple log sources, I was able to reconstruct the attacker's actions and identify areas where the available telemetry did not support a definitive conclusion.
 
-## Skills Demonstrated
-
-- Writing and troubleshooting KQL queries
-- Investigating security alerts using Azure Log Analytics
-- Correlating web, endpoint, database, and network logs
-- Identifying credential access and lateral movement
-- Investigating persistence and possible exfiltration
-- Evaluating AI-generated security information
-- Distinguishing legitimate activity from malicious behavior
-- Using MITRE ATT&CK to categorize attacker techniques
-- Documenting technical findings and supporting evidence
 
 ---
